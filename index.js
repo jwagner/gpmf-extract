@@ -32,11 +32,15 @@ module.exports = function(file, isBrowser = false, update) {
   var workerRunning = true;
   return new Promise(function(resolve, reject) {
     const readBlock = readBlockFactory();
+    function fail(error) {
+      readBlock.stop();
+      reject(error);
+    }
     mp4boxFile = MP4Box.createFile(false);
     var uintArr;
     //Will store timing data to help analyse the extracted data
     var timing = {};
-    mp4boxFile.onError = reject;
+    mp4boxFile.onError = fail;
 
     //When the data is ready, look for the right track
     mp4boxFile.onReady = function(videoData) {
@@ -86,11 +90,12 @@ module.exports = function(file, isBrowser = false, update) {
           var rawData = toBuffer(uintArr);
 
           //And return it
+          readBlock.stop();
           resolve({ rawData, timing });
         };
         mp4boxFile.start();
       } else {
-        reject('Track not found');
+        fail('Track not found');
       }
     };
 
